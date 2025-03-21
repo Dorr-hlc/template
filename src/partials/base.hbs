@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="{{meta.language}}">
+<head>
+<!-- Google Tag Manager -->
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({
+          "gtm.start": new Date().getTime(),
+          event: "gtm.js",
+        });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "{{meta.gtm_id}}");
+    </script>
+    <!-- End Google Tag Manager -->
+    <meta charset="utf-8" />
+    <title>{{ meta.title }}</title>
+     <script src="{{cdn_url}}lib/amt.min.js" async></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="{{ meta.description }}" />
+    <meta name="keywords" content="{{ meta.keywords }}" />
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="bookmark" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/base.min.css?rev=@@hash">
+    <link rel="canonical" href="{{meta.canonical}}">
+    <!-- font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn-node.diskpart.com/file/amtcstatic/2/2024-summer-sale/2024-summer-sale.css">
+    <!-- font -->
+    <script>
+      function ga(compatibilitySend,compatibilityEvent,eventCategory, eventOperation, eventLabel) {
+         window.dataLayer.push({
+        'event': 'custom_ga_event',
+        'eventCategory': eventCategory,
+        'eventOperation': eventOperation,
+        'eventLabel': eventLabel
+    });
+  }
+    </script>
+</head>
+<body>
+    {{#block "main"}}{{/block}}
+   
+    <script src="https://cdn-node.diskpart.com/file/amtcstatic/0/jquery-2.1.4.min.js"></script>
+    <script src="https://cdn-node.diskpart.com/file/amtcstatic/0/countdown.js"></script>
+    <script src="https://cdn-node.diskpart.com/file/amtcstatic/2/2024-summer-sale/2024-summer-sale.js"></script>
+</body>
+</html>
