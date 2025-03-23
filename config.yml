@@ -1,0 +1,29 @@
+htmlFileName: 2025-ceshi-name1
+imageFileName: 2025-wenjianjia
+ftpConfig:
+  host: "ftp.example.com"
+  user: "username"
+  password: "password"
+  parallel: 5, // 并行上传数
+  secure: false, // 启用 FTPS
+domain:
+  ub: https://www.ubackup.com
+  dp: https://www.diskpart.com
+  at: https://www.aomeitech.com
+  am-de: https://www.aomei.de
+  am-fr: https://www.aomei.fr
+  am-jp: https://www.aomei.jp
+cdn_url:  
+  ub: https://static.ubackup.com/
+  dp: https://static.diskpart.com/
+  at: https://static.aomeitech.com/
+  am-de: https://static.aomei.de/
+  am-fr: https://static.aomei.fr/
+  am-jp: https://static.aomei.jp/
+gtm_code:  
+  ub: GTM-MZWCC57
+  dp: GTM-MZWCC57
+  at: GTM-MZWCC57
+  am-de: GTM-MZWCC57
+  am-fr: GTM-MZWCC57
+  am-jp: GTM-MZWCC57

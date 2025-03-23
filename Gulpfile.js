@@ -1,7 +1,5 @@
 const autoprefixer = require("gulp-autoprefixer");
 const browserSync = require("browser-sync").create();
-const cache = require("gulp-cached");
-const cp = require("child_process");
 const cssnano = require("gulp-cssnano");
 const del = require("del");
 const eslint = require("gulp-eslint");
@@ -23,9 +21,13 @@ const sourcemaps = require("gulp-sourcemaps");
 const uglify = require("gulp-uglify");
 const yaml = require("js-yaml");
 const path = require("path");
-const htmlFileName = "2025-ceshi-1";
 const gulpData = require("gulp-data");
-const crypto = require("crypto");
+const ftp = require("vinyl-ftp");
+
+const dataYml = yaml.safeLoad(fs.readFileSync('./config.yml', "utf-8"));
+const htmlFileName = dataYml.htmlFileName;
+const ftpConfig = dataYml.ftpConfig;
+const rev = require("uuid").v4();
 handlebars.Handlebars.registerHelper(layouts(handlebars.Handlebars));
 handlebars.Handlebars.registerHelper("reverse", (arr) => {
   arr.reverse();
@@ -49,14 +51,14 @@ gulp.task("reload", (done) => {
 
 gulp.task("less:lint", () =>
   gulp
-    .src("./src/less/**/*.less") // 监控 less 文件
+    .src("./src/assets/less/**/*.less") // 监控 less 文件
     .pipe(plumber())
     .pipe(lesshint()) // 使用 gulp-lesshint 进行 lint
     .pipe(lesshint.reporter())
 );
 gulp.task("less:build", () =>
   gulp
-    .src(["./src/less/**/*.less", "!./src/less/**/_*.less"])
+    .src(["./src/assets/less/**/*.less", "!./src/assets/less/**/_*.less"])
     .pipe(rename({ suffix: ".min" }))
     .pipe(plumber())
     .pipe(sourcemaps.init())
@@ -72,13 +74,13 @@ gulp.task("less:build", () =>
       })
     )
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest("./dist/css/"))
+    .pipe(gulp.dest("./dist/assets/css/"))
 );
 
 
 gulp.task("less:optimized", () =>
   gulp
-    .src(["./src/less/**/*.less", "!./src/less/**/_*.less"])
+    .src(["./src/assets/less/**/*.less", "!./src/assets/less/**/_*.less"])
     .pipe(rename({ suffix: ".min" }))
     .pipe(plumber())
     .pipe(
@@ -88,7 +90,7 @@ gulp.task("less:optimized", () =>
     )
     .pipe(autoprefixer())
     .pipe(cssnano({ compatibility: "ie8" }))
-    .pipe(gulp.dest("dist/css/"))
+    .pipe(gulp.dest("dist/assets/css/"))
 );
 
 
@@ -97,17 +99,17 @@ gulp.task("less", gulp.series("less:lint", "less:build"));
 
 gulp.task("js:build", () =>
   gulp
-    .src("src/js/**/*.js")
+    .src("src/assets/js/**/*.js")
     .pipe(plumber())
     .pipe(sourcemaps.init())
     .pipe(uglify())
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest("dist/js"))
+    .pipe(gulp.dest("dist/assets/js"))
 );
 
 gulp.task("js:lint", () =>
   gulp
-    .src(["./src/js/**/*.js", "!./src/js/lib/**/*.js", "Gulpfile.js"])
+    .src(["./src/assets/js/**/*.js", "!./src/assets/js/lib/**/*.js", "gulpfile.js"])
     .pipe(plumber())
     .pipe(eslint())
     .pipe(jshint())
@@ -118,17 +120,14 @@ gulp.task("js", gulp.series("js:lint", "js:build"));
 
 gulp.task("images", () =>
   gulp
-    .src("src/img/**/*")
+    .src("./src/assets/img/**/*")
     .pipe(plumber())
-    // .pipe(imagemin({
-    //   progressive: true,
-    // }))
-    .pipe(gulp.dest("./dist/img"))
+    .pipe(gulp.dest("./dist/assets/img"))
 );
 
 gulp.task("images:optimized", () =>
   gulp
-    .src("src/img/**/*")
+    .src("./src/assets/img/**/*")
     .pipe(plumber())
     .pipe(
       imagemin({
@@ -136,32 +135,17 @@ gulp.task("images:optimized", () =>
         multipass: true,
       })
     )
-    .pipe(gulp.dest("./dist/img"))
+    .pipe(gulp.dest("./dist/assets/img"))
 );
 
-gulp.task("resources", () =>
-  gulp
-    .src("src/resources/*")
-    .pipe(plumber())
-    .pipe(gulp.dest("./dist/resources"))
-);
 
-gulp.task("fonts", () =>
-  gulp.src("src/font/*").pipe(plumber()).pipe(gulp.dest("./dist/font"))
-);
+
 
 gulp.task("templates", () => {
-  const templateData = yaml.safeLoad(fs.readFileSync("./data.yml", "utf-8"));
-  const options = {
-    ignorePartials: true, // ignores the unknown footer2 partial in the handlebars template, defaults to false
-    batch: ["./src/partials/"],
-    helpers: {},
-  };
-  console.log(templateData);
+
   return gulp
     .src("./src/templates/**/*.hbs")
     .pipe(plumber())
-    // .pipe(handlebars(templateData, options))
     .pipe(
       gulpData((file) => {
         // 1. 解析 .hbs 文件路径
@@ -172,25 +156,32 @@ gulp.task("templates", () => {
         console.log(`Processing file: ${relativePath}`);
 
         // 2. 提取路径信息
-        const pathParts = relativePath.split(path.sep); // 分割路径
-        let ymlFileName = "ub-en"; // 默认值
 
-        if (pathParts.length === 3) {
-          // 例如：ub/de/index.hbs → ub-de.yml
-          const lang = pathParts[1]; // 获取语言部分：de / it
-          ymlFileName = `ub-${lang}`;
-        } else if (pathParts.length === 2) {
-          // 例如：ub/index.hbs → ub-en.yml
-          ymlFileName = "ub-en";
+        const pathParts = relativePath.split(path.sep); // 分割路径
+        const website = pathParts[0]; // 获取网站部分：ub
+        const lang = pathParts.length === 3 ? pathParts[1] : "en"; // 获取语言部分：de / it
+        const urlPath = lang == 'en' ? '' :  lang;
+        let ymlFileName = `/${website}/${lang}`; // 默认值
+        if (relativePath.includes('am-de')) {
+          ymlFileName = `/${website}/de`;
+        }
+        if (relativePath.includes('am-fr')) {
+          ymlFileName = `/${website}/fr`;
+        }
+        if (relativePath.includes('am-jp')) {
+          ymlFileName = `/${website}/jp`;
         }
         // 3. 构建 yml 文件路径
-        const ymlFilePath = `./src/yml/${ymlFileName}.yml`;
-
+        const ymlFilePath = `./src/yml${ymlFileName}.yml`;
         // 4. 读取并解析 yml 文件
         let templateData = {};
         if (fs.existsSync(ymlFilePath)) {
           try {
             templateData = yaml.safeLoad(fs.readFileSync(ymlFilePath, "utf-8"));
+            templateData.language = lang;
+            templateData.meta.canonical = dataYml.domain[website] + urlPath + '/landing/' + htmlFileName + '.html';
+            templateData.cdn_url = dataYml.cdn_url[website];
+            templateData.gtm_code = dataYml.gtm_code[website];
             console.log(`✅ Loaded data from: ${ymlFilePath}`);
           } catch (err) {
             console.error(`❌ Error reading YAML file: ${ymlFilePath}`, err);
@@ -230,6 +221,7 @@ gulp.task(
           rootpath: `${process.cwd()}/dist`,
         })
       )
+      .pipe(replace(/@@hash/g, rev))
       .pipe(replace(/\.\.\//g, ""))
       .pipe(
         htmlmin({
@@ -248,23 +240,23 @@ gulp.task("watch", () => {
     [
       "./src/templates/**/*.hbs",
       "./src/partials/**/*.hbs",
-      // "data.yml",
       "./src/yml/**/*.yml",
       "events.json",
-      "Gulpfile.js",
+      "gulpfile.js",
     ],
     gulp.series("templates", "reload")
   );
-  gulp.watch(["./src/less/**/*.less"], gulp.series("less", "reload"));
-  gulp.watch("./src/img/**/*", gulp.series("images", "reload"));
-  gulp.watch(["./src/js/**/*.js", "Gulpfile.js"], gulp.series("js", "reload"));
+  gulp.watch(["./src/assets/less/**/*.less"], gulp.series("less", "reload"));
+  gulp.watch("./src/assets/img/**/*", gulp.series("images", "reload"));
+  gulp.watch(["./src/assets/js/**/*.js", "gulpfile.js"], gulp.series("js", "reload"));
 });
+
 
 gulp.task(
   "build",
   gulp.series(
     "clean",
-    gulp.parallel("less", "images", "fonts", "resources", "js", "templates")
+    gulp.parallel("less", "images", "js", "templates"),
   )
 );
 
@@ -275,26 +267,13 @@ gulp.task(
     gulp.parallel(
       "less:optimized",
       "images:optimized",
-      "fonts",
-      "resources",
       "js",
       "templates:optimized"
     )
   )
 );
 
-gulp.task("deploy:rsync", (done) => {
-  cp.exec("rsync -avuzh ./dist/* dan:/srv/example.com/public_html/", () => {
-    process.stdout.write("Deployed to https://example.com\n");
-    done();
-  }).stdout.on("data", (data) => {
-    process.stdout.write(data);
-  });
-});
 
-gulp.task("deploy", gulp.series("build:optimized", "deploy:rsync"));
-
-// use default task to launch Browsersync and watch JS files
 gulp.task(
   "serve",
   gulp.series(
@@ -319,3 +298,40 @@ gulp.task(
     "watch"
   )
 );
+
+
+gulp.task("deploy:ftp", (done) => {
+  const conn = ftp.create(ftpConfig);
+  const distFolders = [
+    { local: "./dist/ub/", remote: "/ubackup.com/landing/" },
+    { local: "./dist/ub/de/", remote: "/ubackup.com/de/landing/" },
+    { local: "./dist/ub/fr/", remote: "/ubackup.com/fr/landing/" },
+    { local: "./dist/ub/es/", remote: "/ubackup.com/es/landing/" },
+    { local: "./dist/ub/it/", remote: "/ubackup.com/it/landing/" },
+    { local: "./dist/ub/jp/", remote: "/ubackup.com/jp/landing/" },
+    { local: "./dist/ub/tw/", remote: "/ubackup.com/tw/landing/" },
+    { local: "./dist/dp/", remote: "/diskpart.com/landing/" },
+    { local: "./dist/dp/de/", remote: "/diskpart.com/de/landing/" },
+    { local: "./dist/dp/fr/", remote: "/diskpart.com/fr/landing/" },
+    { local: "./dist/dp/es/", remote: "/diskpart.com/es/landing/" },
+    { local: "./dist/dp/it/", remote: "/diskpart.com/it/landing/" },
+    { local: "./dist/dp/jp/", remote: "/diskpart.com/jp/landing/" },
+    { local: "./dist/dp/tw/", remote: "/diskpart.com/tw/landing/" },
+    { local: "./dist/at/", remote: "/aomeitech.com/landing/" },
+    { local: "./dist/am-de/", remote: "/aomei.de/landing/" },
+    { local: "./dist/am-fr/", remote: "/aomei.fr/landing/" },
+    { local: "./dist/am-jp/", remote: "/aomei.jp/landing/" },
+  ];
+  distFolders.forEach((folder) => {
+    gulp
+      .src(folder.local + "**/*", { base: folder.local, buffer: false })
+      .pipe(conn.newer(folder.remote)) // 只上传更改的文件
+      .pipe(conn.dest(folder.remote)) // 上传到对应 FTP 目标目录
+      .on("end", () => {
+        log(`✅ 上传完成：${folder.local} → ${folder.remote}`);
+      });
+  });
+  done();
+});
+
+gulp.task("deploy", gulp.series("build:optimized"));

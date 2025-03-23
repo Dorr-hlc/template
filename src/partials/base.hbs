@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{meta.language}}">
+<html lang="{{language}}">
 <head>
 <!-- Google Tag Manager -->
     <script>
@@ -15,7 +15,7 @@
         j.async = true;
         j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
         f.parentNode.insertBefore(j, f);
-      })(window, document, "script", "dataLayer", "{{meta.gtm_id}}");
+      })(window, document, "script", "dataLayer", "{{gtm_code}}");
     </script>
     <!-- End Google Tag Manager -->
     <meta charset="utf-8" />
@@ -27,14 +27,14 @@
     <meta name="robots" content="noindex,nofollow">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
     <link rel="bookmark" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/css/base.min.css?rev=@@hash">
+
     <link rel="canonical" href="{{meta.canonical}}">
     <!-- font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn-node.diskpart.com/file/amtcstatic/2/2024-summer-sale/2024-summer-sale.css">
     <!-- font -->
+     <link rel="stylesheet" type="text/css" href="/assets/css/base.min.css?rev=@@hash">
     <script>
       function ga(compatibilitySend,compatibilityEvent,eventCategory, eventOperation, eventLabel) {
          window.dataLayer.push({
@@ -51,6 +51,6 @@
    
     <script src="https://cdn-node.diskpart.com/file/amtcstatic/0/jquery-2.1.4.min.js"></script>
     <script src="https://cdn-node.diskpart.com/file/amtcstatic/0/countdown.js"></script>
-    <script src="https://cdn-node.diskpart.com/file/amtcstatic/2/2024-summer-sale/2024-summer-sale.js"></script>
+    <script src="https://cdn-node.diskpart.com/file/amtcstatic/2/2024-summer-sale/2024-summer-sale.js?rev=@@hash"></script>
 </body>
 </html>
